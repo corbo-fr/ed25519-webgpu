@@ -39,4 +39,9 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     for (var i = 0u; i < 16u; i++) {
         digests[digest_base + i] = byteswap32(digest[i]);
     }
+
+    // RFC 8032 §5.1.5 clamping on the first 32 bytes (ed25519 scalar).
+    digests[digest_base + 0u] &= 0xFFFFFFF8u; // clear bits 0-2  (byte 0,  bits 0-2)
+    digests[digest_base + 7u] &= 0x7FFFFFFFu; // clear bit 255   (byte 31, bit 7)
+    digests[digest_base + 7u] |= 0x40000000u; // set   bit 254   (byte 31, bit 6)
 }

@@ -124,7 +124,7 @@ Dépend de 2c. Formules étendues de Hisil 2008 (unified, pas de cas spéciaux).
 > **Commit :** `feat(shaders): compute pipeline entries sha512 + scalar_mult`
 
 - [ ] `src/shaders/pipeline_sha512.wgsl` ✅ (écrit, pas testé)
-  - [ ] Ajouter clamping in-place du digest dans le shader
+  - [x] Ajouter clamping in-place du digest dans le shader
 - [ ] `src/shaders/pipeline_scalar_mult.wgsl`
   - [ ] Bindings : seeds clampés (N×32 bytes) → pubkeys (N×32 bytes)
   - [ ] `@compute @workgroup_size(64)` — 1 thread = 1 clé
