@@ -2,6 +2,17 @@
 
 Statuts : ❌ pas commencé · 🔄 en cours · ✅ terminé
 
+> **Convention sessions courtes — RÈGLE ABSOLUE :**
+> - **1 tâche atomique par message.** Écrire un fichier, corriger un bug, ajouter un test — pas les trois à la fois.
+> - **Sous-splitter sans limite.** Si une tâche prend plus de ~20 lignes de code, la découper. Si une sous-tâche prend plus de ~10 lignes, la re-découper.
+> - **Demander avant de chercher.** Si une recherche (API, spec, calcul) est nécessaire, demander à l'utilisateur avant de le faire dans le message courant.
+> - **S'arrêter et confirmer.** Après chaque fichier écrit ou modifié : s'arrêter, résumer en 1 ligne ce qui a été fait, demander confirmation avant de continuer.
+> - **Context clair = `/clear` possible.** L'utilisateur veut pouvoir faire `/clear` régulièrement sans perdre d'information critique — tout l'état important doit être dans ce fichier PLAN.md.
+>
+> **Convention commandes lourdes :** quand une étape nécessite un run browser WebGPU, benchmark GPU, ou download réseau, demander à l'utilisateur de la lancer manuellement avec `! <commande>`.
+>
+> **Tests :** chaque phase doit être couverte au maximum. Avant de passer à la phase suivante, tous les tests de la phase courante doivent être verts. Si les tests tournent en browser (GPU), demander à l'utilisateur de les lancer et d'en confirmer le résultat.
+
 ---
 
 ## Phase 1 — Bootstrap config ✅
@@ -15,101 +26,107 @@ Statuts : ❌ pas commencé · 🔄 en cours · ✅ terminé
 - [x] `LICENSE-APACHE` — Apache-2.0
 - [x] `.gitignore` — node_modules, dist, .wrangler
 - [x] `pnpm install` — vérifier que `vitest`, `@vitest/browser`, `playwright`, `@noble/curves`, `@noble/hashes`, `typescript` sont installés
-- [ ] `npx playwright install chromium` *(réseau indisponible — à lancer manuellement)*
+- [x] `npx playwright install chromium`
 
 ---
 
-## Phase 2 — WGSL primitives ❌
+## Phase 2 — WGSL primitives
 
 Règles non négociables appliquées à tous les fichiers WGSL :
-- `vec2<u32>` pour le 64-bit (x=high, y=low)
-- 10 limbs × 26 bits pour GF(2^255-19) : `num_limbs=10`, `log_limb_size=26`, `mask=0x3FFFFFF`
+- **13-bit limbs, 20 limbs** pour GF(2^255-19) : `NUM_LIMBS=20`, `LIMB_BITS=13`, `LIMB_MASK=0x1FFF`
+  - Raison : produit de deux limbes < 2^26 < 2^32, accumulation 20 × 2^26 ≈ 2^30.3 < 2^32 → pure u32, pas besoin de vec2<u32>
+  - Réduction : 2^260 = 2^5 × 2^255 ≡ 32 × 19 = 608 mod p (facteur petit, fold simple)
 - Zéro `min()`/`max()` entier — `select()` ou `if/else` (bug Naga MSL backend)
 - Zéro boucle dans les `@compute` entries (pattern no-loop, 1 thread = 1 clé)
 
-### 2a — SHA-512 ❌
+### 2a — SHA-512 ✅
 
-> **Commit :** `feat(shaders): sha512 vec2<u32> for 32-byte input`
+> `src/shaders/primitives/sha512.wgsl` + `src/shaders/pipeline_sha512.wgsl` — écrits, **tests pas encore lancés**
 
-- [ ] `src/shaders/primitives/sha512.wgsl`
-  - [ ] Types/helpers : `vec2<u32>` pour u64, `rotr64(v, bits)` (cas bits<32 et bits≥32)
-  - [ ] `add64(a, b)` avec carry detection via u32 overflow
-  - [ ] `shr64(a, n)` et `shl64(a, n)`
-  - [ ] 80 round constants `array<vec2<u32>, 80>` (SHA-512 standard)
-  - [ ] Hash initial state `array<vec2<u32>, 8>`
-  - [ ] Fonctions `ch64`, `maj64`, `sigma0_64`, `sigma1_64`, `gamma0_64`, `gamma1_64`
-  - [ ] Fonction `sha512_32(seed: array<u32, 8>) -> array<vec2<u32>, 8>` :
-    - [ ] Padding fixe pour 32-byte input (1 bloc de 128 bytes : W[8]=0x80000000, W[14]=0, W[15]=0x100)
-    - [ ] Message schedule W (16 mots initiaux + expansion jusqu'à 80)
-    - [ ] 80 rounds de compression
-    - [ ] Addition état final
+**Action requise de l'utilisateur :** `! cd /Users/trixky/Projects/webgpu-ed25519 && pnpm test:layer1`
+Résultat attendu : sha512 known vectors + 1000 random seeds → 0 mismatch
 
-### 2b — BigInt 10-limb ❌
+### 2b — BigInt 20-limb (13 bits) ✅
 
-> **Commit :** `feat(shaders): bigint 10-limb u26 primitives`
+> **Commit :** `feat(shaders): bigint 20-limb 13-bit primitives`
 
-- [ ] `src/shaders/primitives/bigint.wgsl`
-  - [ ] `struct BigInt { limbs: array<u32, 10> }` et `struct BigIntWide { limbs: array<u32, 20> }`
-  - [ ] `bigint_zero()`, `bigint_one()`
-  - [ ] `bigint_add(a, b) -> BigInt` avec carry propagation
-  - [ ] `bigint_sub(a, b) -> BigInt` avec borrow propagation
-  - [ ] `bigint_mul(a, b) -> BigIntWide` — multiplication large 10×10→20 limbs
-  - [ ] `bigint_gte(a, b) -> bool` — comparaison (sans `min`/`max`)
-  - [ ] `bigint_eq(a, b) -> bool`
-  - [ ] `bigint_from_bytes_le(bytes: array<u32, 8>) -> BigInt` — 32 bytes LE → 10 limbs
+Représentation choisie : 20 limbs × 13 bits = 260 bits (couvre 2^255 avec marge).
+Produit deux limbes max = (2^13-1)² < 2^26 ≤ u32 max → accumulation sans vec2.
 
-### 2c — Field GF(2^255-19) ❌
+Sous-tâches :
+
+- [x] Décider la représentation (13-bit × 20 limbs — voir note ci-dessus)
+- [x] **2b.1** `struct BigInt { limbs: array<u32, 20> }` + constantes `LIMB_BITS=13`, `LIMB_MASK=0x1FFF`
+- [x] **2b.2** `bigint_zero() -> BigInt`, `bigint_one() -> BigInt`
+- [x] **2b.3** `bigint_add(a, b) -> BigInt` — addition avec carry propagation (result mod 2^260)
+- [x] **2b.4** `bigint_sub(a, b) -> BigInt` — soustraction avec borrow (wraps mod 2^260)
+- [x] **2b.5** `bigint_gte(a, b) -> bool` — comparaison sans `min()`/`max()`, `i -= 1u` (pas `i--`)
+- [x] **2b.6** `bigint_eq(a, b) -> bool`
+- [x] **2b.7** `bigint_mul(a, b) -> BigIntWide` — 20×20→**40** limbs (carry out de limb 38 → limb 39 ≤ 7)
+  - `struct BigIntWide { limbs: array<u32, 40> }` — p² < 2^510 = 2^3 × 2^507, 40×13=520 ≥ 510
+  - Schoolbook : boucle i=0..19, j=0..19 → wide[i+j] += a[i]*b[j]
+  - Carry propagation sur les 40 limbs
+- [x] **2b.8** `bigint_from_bytes_le(bytes: ptr<function, array<u32, 8>>) -> BigInt` + `bigint_to_bytes_le`
+  - 32 bytes (8 × u32 little-endian) → 20 limbs × 13 bits (bits > 255 silencieusement zéro)
+
+**Résultat** : `src/shaders/primitives/bigint.wgsl` — écrit, corrigé, **tests verts**.
+
+### 2c — Field GF(2^255-19) ✅
 
 > **Commit :** `feat(shaders): field arithmetic mod 2^255-19`
 
-- [ ] `src/shaders/primitives/ff.wgsl`
-  - [ ] Constante `FIELD_P` : 2^255-19 en 10 limbs
-  - [ ] `field_reduce(a: BigIntWide) -> BigInt` — réduction mod p après multiplication
-  - [ ] `field_add(a, b) -> BigInt` — addition mod p
-  - [ ] `field_sub(a, b) -> BigInt` — soustraction mod p (résultat positif)
-  - [ ] `field_mul(a, b) -> BigInt` — multiplication mod p (appelle bigint_mul + field_reduce)
-  - [ ] `field_sq(a) -> BigInt` — carré mod p (optimisé ou aliasé sur field_mul)
-  - [ ] `field_pow(a, exp: BigInt) -> BigInt` — exponentiation (addition chain itérative, no recursion)
-  - [ ] `field_inv(a) -> BigInt` — Fermat : a^(p-2) mod p via addition chain fixe (255 squarings + multiplications)
-  - [ ] `field_sqrt(a) -> BigInt` — racine carrée (p ≡ 5 mod 8, formule Tonelli-Shanks simplifiée)
+Dépend de 2b. Réduction via identité 2^260 ≡ 608 mod p (fold les limbs 20..39 × 608 dans limbs 0..19, 2 passes).
 
-### 2d — Montgomery (optionnel selon perf) ❌
+- [x] **2c.1** `field_p() -> BigInt` : p = 2^255-19 en 20 limbs × 13 bits
+  - `p[0]=0x1FED` (= 2^13-19), `p[1..18]=0x1FFF`, `p[19]=0x00FF`
+- [x] **2c.2** `field_reduce_wide(a: BigIntWide) -> BigInt`
+  - Fold pass 1 : limbs 20..39 → add w[k]*608 à w[k-20]; carry propagation complète (40 limbs)
+  - Fold pass 2 : repasse sur les limbs 20..39 (au plus carry 1 depuis pass 1); carry sur 20 limbs
+  - Soustraction conditionnelle de p si résultat ≥ p
+- [x] **2c.3** `field_add(a, b: BigInt) -> BigInt`
+- [x] **2c.4** `field_sub(a, b: BigInt) -> BigInt`
+- [x] **2c.5** `field_mul(a, b: BigInt) -> BigInt`
+- [x] **2c.6** `field_sq(a: BigInt) -> BigInt` — aliasé sur field_mul pour v0.1
+- [x] **2c.7** `field_pow(base, exp: ptr<function, array<u32, 8>>) -> BigInt` — square-and-multiply LSB-first
+- [x] **2c.8** `field_inv(a: BigInt) -> BigInt` — a^(p-2) via field_pow (Fermat)
+- [x] **2c.9** `field_sqrt(a: BigInt) -> BigInt` — a^((p+3)/8), correction ×i si v²=-a
 
-> **Commit :** `feat(shaders): montgomery multiplication` *(skip si field_mul assez rapide)*
+**Résultat** : `src/shaders/primitives/ff.wgsl` — écrit, corrigé (bug field_reduce_wide : pass 2 utilisait 2^260≡608 au lieu de 2^255≡19, résultat jusqu'à 32p non réduit), **tests verts**.
 
-- [ ] `src/shaders/primitives/mont.wgsl`
-  - [ ] `struct MontBigInt { limbs: array<u32, 10> }` — représentation Montgomery
-  - [ ] `mont_R`, `mont_R2`, `mont_N_prime` pour p = 2^255-19
-  - [ ] `mont_mul(a, b) -> MontBigInt` — CIOS algorithm
-  - [ ] `to_mont(a) -> MontBigInt`, `from_mont(a) -> BigInt`
-  - [ ] **Note :** si les tests layer 1 montrent que field_mul (non-Montgomery) est suffisamment rapide sur GPU, cette phase peut être ignorée en v0.1.0
+> **Bug corrigé** : `field_reduce_wide` pass 2 — l'ancienne version foldait le carry du limb 20 par 608 (2^260 ≡ 608) mais laissait le résultat jusqu'à 2^260 ≈ 32p. La soustraction conditionnelle unique ne pouvait pas réduire à [0,p). Fix : extraire les bits 255..259 du résultat 260-bit (h = limb[19]>>8 + limb[20]×32), les fold par 19 (2^255 ≡ 19 mod p), ce qui garantit résultat < 2p.
+
+### 2d — Montgomery ❌ (skip v0.1 si perf OK)
+
+Si `pnpm bench` montre que field_mul est trop lent, ajouter mont.wgsl. Sinon skip.
 
 ### 2e — Edwards25519 ❌
 
 > **Commit :** `feat(shaders): edwards25519 point operations`
 
-- [ ] `src/shaders/primitives/edwards25519.wgsl`
-  - [ ] Constantes de courbe : `D` (constante de torsion Ed25519), `GX`, `GY` (point générateur)
-  - [ ] `struct PointExtended { X: BigInt, Y: BigInt, Z: BigInt, T: BigInt }` — coordonnées projectives étendues
-  - [ ] `point_identity() -> PointExtended`
-  - [ ] `point_add(p, q) -> PointExtended` — addition complète (formule unifiée Hisil 2008)
-  - [ ] `point_double(p) -> PointExtended`
-  - [ ] `point_compress(p) -> array<u32, 8>` — compress vers 32 bytes (coordonnée y + bit de signe de x)
-  - [ ] `scalar_mult(scalar: array<u32, 8>, base: PointExtended) -> PointExtended` — double-and-add 255 bits, itératif, no recursion
+Dépend de 2c. Formules étendues de Hisil 2008 (unified, pas de cas spéciaux).
+
+- [x] **2e.1** Constantes courbe en 20 limbs :
+  - `CURVE_D` : constante d = -121665/121666 mod p
+  - `CURVE_2D` : 2·d mod p (formules Hisil)
+  - `BASE_X`, `BASE_Y` : point générateur G (x pair, vérifié sur équation courbe)
+- [ ] **2e.2** `struct PointExtended { X: BigInt, Y: BigInt, Z: BigInt, T: BigInt }`
+- [ ] **2e.3** `point_identity() -> PointExtended` — (0, 1, 1, 0)
+- [ ] **2e.4** `point_add(p, q: PointExtended) -> PointExtended` — formule unifiée (8 field muls)
+- [ ] **2e.5** `point_double(p: PointExtended) -> PointExtended` — formule dédiée (4 muls + 4 sq)
+- [ ] **2e.6** `point_compress(p: PointExtended) -> array<u32, 8>` — y + signe(x), little-endian
+- [ ] **2e.7** `scalar_mult(scalar: ptr<function, array<u32, 8>>, base: PointExtended) -> PointExtended`
+  - Double-and-add 255 itérations, itératif, pas de récursion
 
 ### 2f — Pipelines compute ❌
 
 > **Commit :** `feat(shaders): compute pipeline entries sha512 + scalar_mult`
 
-- [ ] `src/shaders/pipeline_sha512.wgsl`
-  - [ ] Bindings : `@binding(0)` seeds (N×32 bytes en/), `@binding(1)` digests (N×64 bytes sortie)
-  - [ ] `@compute @workgroup_size(64)` — `fn main(@builtin(global_invocation_id) gid: vec3<u32>)`
-  - [ ] Lecture seed[gid.x], appel sha512_32, écriture digest[gid.x]
-  - [ ] Clamping in-place du digest (bits 0, 1, 2, 255 du scalaire résultant)
+- [ ] `src/shaders/pipeline_sha512.wgsl` ✅ (écrit, pas testé)
+  - [ ] Ajouter clamping in-place du digest dans le shader
 - [ ] `src/shaders/pipeline_scalar_mult.wgsl`
-  - [ ] Bindings : `@binding(0)` scalaires (N×32 bytes), `@binding(1)` pubkeys (N×32 bytes sortie)
-  - [ ] `@compute @workgroup_size(64)`
-  - [ ] Lecture scalaire[gid.x], scalar_mult vs G, point_compress, écriture pubkey[gid.x]
+  - [ ] Bindings : seeds clampés (N×32 bytes) → pubkeys (N×32 bytes)
+  - [ ] `@compute @workgroup_size(64)` — 1 thread = 1 clé
+  - [ ] Lecture scalaire[gid.x] → bigint_from_bytes_le → scalar_mult(G) → point_compress → écriture
 
 ---
 
@@ -130,13 +147,12 @@ Harness commun avant les tests individuels.
 
 > **Commit :** `test(layer1): field25519 vectors`
 
-- [ ] `test/gpu/primitives/field25519.test.ts`
-  - [ ] `field_add` : 1000 paires aléatoires vs noble `Fp.add`
-  - [ ] `field_sub` : 1000 paires → résultat toujours dans [0, p)
-  - [ ] `field_mul` : 1000 paires vs noble `Fp.mul`
-  - [ ] `field_sq` : 1000 valeurs vs noble `Fp.sqr`
-  - [ ] `field_inv` : 500 valeurs vs noble `Fp.inv`, + inv(0) = 0
-  - [ ] Edge cases : 0, 1, p-1 pour chaque opération
+- [x] `test/gpu/primitives/field25519.test.ts` — **tous verts**
+  - [x] `field_add` : 1000 paires aléatoires vs noble `Fp.add` + edge cases (0, p-1)
+  - [x] `field_sub` : 1000 paires vs noble `Fp.sub` + edge cases
+  - [x] `field_mul` : 1000 paires vs noble `Fp.mul` + edge cases
+  - [x] `field_sq` : 1000 valeurs vs noble `Fp.sqr`
+  - [x] `field_inv` : 500 valeurs vs `a*inv(a)==1` + inv(0)=0
 
 > **Commit :** `test(layer1): edwards25519 point operations`
 
@@ -273,18 +289,19 @@ Test manuel sur Metal (machine courante, M-series) :
 
 ## Progression
 
-| Phase | Statut |
-|---|---|
-| 1 — Bootstrap config | ✅ |
-| 2a — SHA-512 WGSL | ❌ |
-| 2b — BigInt WGSL | ❌ |
-| 2c — Field GF(2^255-19) WGSL | ❌ |
-| 2d — Montgomery WGSL | ❌ |
-| 2e — Edwards25519 WGSL | ❌ |
-| 2f — Pipelines compute WGSL | ❌ |
-| 3 — Test layer 1 | ❌ |
-| 4 — TypeScript core | ❌ |
-| 5 — Test layer 2 | ❌ |
-| 6 — Vanity helper | ❌ |
-| 7 — Test layer 3 | ❌ |
-| 8 — CI | ❌ |
+| Phase | Statut | Bloqué par |
+|---|---|---|
+| 1 — Bootstrap config | ✅ | — |
+| 2a — SHA-512 WGSL | ✅ | — |
+| 2b — BigInt 20-limb 13-bit | ✅ | — |
+| 2c — Field GF(2^255-19) | ✅ | — |
+| 2d — Montgomery | ❌ skip v0.1 | bench |
+| 2e — Edwards25519 | 🔄 (2e.1 ✅) | 2e.2+ |
+| 2f — Pipelines compute | ❌ | 2e vert |
+| 3 — Test layer 1 (sha512+field) | ✅ | — |
+| 3 — Test layer 1 (edwards+scalar) | ❌ | 2e vert |
+| 4 — TypeScript core | ❌ | layer1 vert |
+| 5 — Test layer 2 | ❌ | toi : `pnpm test:layer2` |
+| 6 — Vanity helper | ❌ | layer2 vert |
+| 7 — Test layer 3 | ❌ | toi : `pnpm test:layer3` |
+| 8 — CI | ❌ | layer3 vert |

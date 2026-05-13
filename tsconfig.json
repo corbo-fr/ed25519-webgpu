@@ -6,6 +6,7 @@
     "strict": true,
     "noEmit": true,
     "lib": ["ESNext", "DOM"],
+    "types": ["@webgpu/types"],
     "skipLibCheck": true
   },
   "include": ["src/**/*", "test/**/*"]
