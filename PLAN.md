@@ -158,11 +158,12 @@ Harness commun avant les tests individuels.
 
 > **Commit :** `test(layer1): edwards25519 point operations`
 
-- [ ] `test/gpu/primitives/edwards25519.test.ts`
-  - [ ] `point_add` : 1000 paires de points aléatoires vs noble
-  - [ ] `point_double` : 1000 points vs noble
-  - [ ] `point_add(identity, P) = P` et `point_add(P, identity) = P`
-  - [ ] `point_compress` : 100 points vs noble output
+- [x] `test/gpu/primitives/edwards25519.test.ts` — **tous verts**
+  - [x] `point_add` : 1000 paires de points aléatoires vs noble
+  - [x] `point_double` : 1000 points vs noble
+  - [x] `point_add(identity, P) = P` et `point_add(P, identity) = P`
+  - [x] `point_compress` : 100 points vs noble output
+  - Bug corrigé : `point_add` utilisait `curve_2d()` au lieu de `curve_d()` pour C=T1·T2·d (noble uses d, not 2d)
 
 > **Commit :** `test(layer1): scalar multiplication`
 
@@ -301,7 +302,8 @@ Test manuel sur Metal (machine courante, M-series) :
 | 2e — Edwards25519 | ✅ | — |
 | 2f — Pipelines compute | ❌ | 2e vert |
 | 3 — Test layer 1 (sha512+field) | ✅ | — |
-| 3 — Test layer 1 (edwards+scalar) | ❌ | 2e vert |
+| 3 — Test layer 1 (edwards) | ✅ | — |
+| 3 — Test layer 1 (scalar-mult) | ❌ | edwards vert |
 | 4 — TypeScript core | ❌ | layer1 vert |
 | 5 — Test layer 2 | ❌ | toi : `pnpm test:layer2` |
 | 6 — Vanity helper | ❌ | layer2 vert |
