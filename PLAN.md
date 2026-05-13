@@ -1,5 +1,7 @@
 # webgpu-ed25519 — Plan d'implémentation Step 2
 
+> **Contexte final :** cette lib sera intégrée dans `/Users/trixky/Projects/vanity_keypair_generator` (SvelteKit, Cloudflare Pages) pour remplacer le worker CPU actuel par un pipeline GPU. L'intégration se fait après que toutes les phases de ce plan sont vertes.
+
 Statuts : ❌ pas commencé · 🔄 en cours · ✅ terminé
 
 > **Convention sessions courtes — RÈGLE ABSOLUE :**
