@@ -51,3 +51,40 @@ fn curve_base_x() -> BigInt {
         0x0A7Fu, 0x0D6Eu, 0x169Eu, 0x1A4Du, 0x0042u,
     ));
 }
+
+// Extended twisted Edwards coordinates: (X:Y:Z:T) with x=X/Z, y=Y/Z, x*y=T/Z.
+struct PointExtended {
+    X: BigInt,
+    Y: BigInt,
+    Z: BigInt,
+    T: BigInt,
+}
+
+// Identity point: (0 : 1 : 1 : 0)  i.e. affine (0, 1).
+fn point_identity() -> PointExtended {
+    return PointExtended(bigint_zero(), bigint_one(), bigint_one(), bigint_zero());
+}
+
+// Unified addition — Hisil-Wong-Carter-Dawson 2008, add-2008-hwcd, a = -1.
+//
+// A = X1·X2        B = Y1·Y2
+// C = T1·T2·(2d)   D = Z1·Z2
+// E = (X1+Y1)·(X2+Y2) - A - B
+// F = D-C          G = D+C        H = B+A
+// X3=E·F  Y3=G·H  Z3=F·G  T3=E·H
+fn point_add(p: PointExtended, q: PointExtended) -> PointExtended {
+    let A  = field_mul(p.X, q.X);
+    let B  = field_mul(p.Y, q.Y);
+    let C  = field_mul(field_mul(p.T, q.T), curve_2d());
+    let D  = field_mul(p.Z, q.Z);
+    let E  = field_sub(field_sub(field_mul(field_add(p.X, p.Y), field_add(q.X, q.Y)), A), B);
+    let F  = field_sub(D, C);
+    let G  = field_add(D, C);
+    let H  = field_add(B, A);
+    return PointExtended(
+        field_mul(E, F),
+        field_mul(G, H),
+        field_mul(F, G),
+        field_mul(E, H),
+    );
+}
