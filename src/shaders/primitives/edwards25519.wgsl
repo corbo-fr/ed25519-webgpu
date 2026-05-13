@@ -65,6 +65,31 @@ fn point_identity() -> PointExtended {
     return PointExtended(bigint_zero(), bigint_one(), bigint_one(), bigint_zero());
 }
 
+// Dedicated doubling — dbl-2008-hwcd, a = -1.
+//
+// A = X1²        B = Y1²
+// C = 2·Z1²      D = -A       (a = -1)
+// E = (X1+Y1)² - A - B
+// G = D+B        F = G-C      H = D-B
+// X3=E·F  Y3=G·H  Z3=F·G  T3=E·H
+fn point_double(p: PointExtended) -> PointExtended {
+    let A  = field_sq(p.X);
+    let B  = field_sq(p.Y);
+    let Z2 = field_sq(p.Z);
+    let C  = field_add(Z2, Z2);
+    let D  = field_sub(bigint_zero(), A);
+    let E  = field_sub(field_sub(field_sq(field_add(p.X, p.Y)), A), B);
+    let G  = field_add(D, B);
+    let F  = field_sub(G, C);
+    let H  = field_sub(D, B);
+    return PointExtended(
+        field_mul(E, F),
+        field_mul(G, H),
+        field_mul(F, G),
+        field_mul(E, H),
+    );
+}
+
 // Unified addition — Hisil-Wong-Carter-Dawson 2008, add-2008-hwcd, a = -1.
 //
 // A = X1·X2        B = Y1·Y2

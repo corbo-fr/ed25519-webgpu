@@ -114,7 +114,7 @@ Dépend de 2c. Formules étendues de Hisil 2008 (unified, pas de cas spéciaux).
 - [x] **2e.2** `struct PointExtended { X: BigInt, Y: BigInt, Z: BigInt, T: BigInt }`
 - [x] **2e.3** `point_identity() -> PointExtended` — (0, 1, 1, 0)
 - [x] **2e.4** `point_add(p, q: PointExtended) -> PointExtended` — formule unifiée (8 field muls)
-- [ ] **2e.5** `point_double(p: PointExtended) -> PointExtended` — formule dédiée (4 muls + 4 sq)
+- [x] **2e.5** `point_double(p: PointExtended) -> PointExtended` — formule dédiée (4 muls + 4 sq)
 - [ ] **2e.6** `point_compress(p: PointExtended) -> array<u32, 8>` — y + signe(x), little-endian
 - [ ] **2e.7** `scalar_mult(scalar: ptr<function, array<u32, 8>>, base: PointExtended) -> PointExtended`
   - Double-and-add 255 itérations, itératif, pas de récursion
