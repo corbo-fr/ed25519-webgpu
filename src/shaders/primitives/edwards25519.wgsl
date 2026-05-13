@@ -113,3 +113,31 @@ fn point_add(p: PointExtended, q: PointExtended) -> PointExtended {
         field_mul(E, H),
     );
 }
+
+// Compress an extended point to 32 bytes (RFC 8032 §5.1.2).
+// Result: y encoded little-endian, bit 255 = parity of x (low bit).
+fn point_compress(p: PointExtended) -> array<u32, 8> {
+    let z_inv = field_inv(p.Z);
+    let y     = field_mul(p.Y, z_inv);
+    let x     = field_mul(p.X, z_inv);
+    var bytes = bigint_to_bytes_le(y);
+    bytes[7] |= (x.limbs[0] & 1u) << 31u;
+    return bytes;
+}
+
+// Scalar multiplication — double-and-add, LSB-first, 255 iterations.
+// scalar: 8×u32 little-endian (bits 0-254 used; bit 255 assumed 0 after clamping).
+fn scalar_mult(scalar: ptr<function, array<u32, 8>>, base: PointExtended) -> PointExtended {
+    var result = point_identity();
+    var addend = base;
+    for (var i = 0u; i < 255u; i += 1u) {
+        let word = i >> 5u;
+        let bit  = i & 31u;
+        let b    = ((*scalar)[word] >> bit) & 1u;
+        if b == 1u {
+            result = point_add(result, addend);
+        }
+        addend = point_double(addend);
+    }
+    return result;
+}
