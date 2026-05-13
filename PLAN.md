@@ -167,12 +167,12 @@ Harness commun avant les tests individuels.
 
 > **Commit :** `test(layer1): scalar multiplication`
 
-- [ ] `test/gpu/primitives/scalar-mult.test.ts`
-  - [ ] `scalar_mult(0, G) = identity`
-  - [ ] `scalar_mult(1, G) = G`
-  - [ ] `scalar_mult(2, G) = 2G` vs noble
-  - [ ] 1000 scalaires aléatoires vs `noble.getPublicKey`
-  - [ ] Scalaires edge : `l-1` (ordre de la courbe moins 1), `l` (=identity)
+- [x] `test/gpu/primitives/scalar-mult.test.ts` — **tous verts**
+  - [x] `scalar_mult(0, G) = identity`
+  - [x] `scalar_mult(1, G) = G`
+  - [x] `scalar_mult(2, G) = 2G` vs noble
+  - [x] 1000 scalaires aléatoires vs `noble.ExtendedPoint.BASE.multiply(scalar)`
+  - [x] Scalaires edge : `l-1` (ordre de la courbe moins 1), `l` (=identity)
 
 **Gate layer 1 :** `pnpm test:layer1` → 0 mismatch avant de continuer
 
@@ -303,7 +303,7 @@ Test manuel sur Metal (machine courante, M-series) :
 | 2f — Pipelines compute | ❌ | 2e vert |
 | 3 — Test layer 1 (sha512+field) | ✅ | — |
 | 3 — Test layer 1 (edwards) | ✅ | — |
-| 3 — Test layer 1 (scalar-mult) | ❌ | edwards vert |
+| 3 — Test layer 1 (scalar-mult) | ✅ | — |
 | 4 — TypeScript core | ❌ | layer1 vert |
 | 5 — Test layer 2 | ❌ | toi : `pnpm test:layer2` |
 | 6 — Vanity helper | ❌ | layer2 vert |
