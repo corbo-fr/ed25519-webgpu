@@ -155,3 +155,20 @@ Critères de validation :
 | 3 — Feature detect + dispatch | ❌ | Phase 2 |
 | 4 — UI badge | ❌ | Phase 3 |
 | 5 — Build + smoke test | ❌ | Phase 4 |
+
+---
+
+## Note — Itération locale sans publish
+
+```bash
+# Une seule fois au setup :
+# → "webgpu-ed25519": "file:../webgpu-ed25519" dans package.json de vanity
+# → pnpm install dans vanity
+
+# Ensuite, deux terminaux :
+cd webgpu-ed25519 && pnpm build:watch   # tsc rebuild à chaque save
+cd vanity_keypair_generator && pnpm dev # Vite HMR via le symlink
+```
+
+Aucun publish, aucun version bump pendant le dev.
+Quand c'est stable : tag `vX.Y.Z` → CI publie npm → switcher de `file:` à `^X.Y.Z` dans vanity.
