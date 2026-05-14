@@ -199,10 +199,10 @@ Dépend de 2c. Formules étendues de Hisil 2008 (unified, pas de cas spéciaux).
 
 > **Commit :** `feat(vanity): matcher, finder, primitives export`
 
-- [ ] `src/vanity/matcher.ts`
-  - [ ] `encodePrefix(prefix: string): Uint8Array` — encode en bytes base58 comparables
-  - [ ] `encodeSuffix(suffix: string): Uint8Array`
-  - [ ] `matches(pubkey58: string, prefix, suffix, caseSensitive): boolean`
+- [x] `src/vanity/matcher.ts`
+  - [x] `encodePrefix(prefix: string): Uint8Array` — encode en bytes base58 comparables
+  - [x] `encodeSuffix(suffix: string): Uint8Array`
+  - [x] `matches(pubkey58: string, prefix, suffix, caseSensitive): boolean`
 - [ ] `src/vanity/finder.ts`
   - [ ] `findVanity(gpu, opts): AsyncIterable<VanityHit>`
   - [ ] Boucle rAF (ou `setImmediate` en Worker context)
@@ -278,6 +278,6 @@ Test manuel sur Metal (machine courante, M-series) :
 | 3 — Test layer 1 (scalar-mult) | ✅ | — |
 | 4 — TypeScript core | ✅ | — |
 | 5 — Test layer 2 | ✅ | — |
-| 6 — Vanity helper | ❌ | layer2 vert |
+| 6 — Vanity helper | 🔄 | layer2 vert |
 | 7 — Test layer 3 | ❌ | toi : `pnpm test:layer3` |
 | 8 — CI | ❌ | layer3 vert |
