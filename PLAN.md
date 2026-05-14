@@ -232,17 +232,17 @@ Dépend de 2c. Formules étendues de Hisil 2008 (unified, pas de cas spéciaux).
 
 ---
 
-## Phase 8 — CI ❌
+## Phase 8 — CI ✅
 
 > **Commit :** `ci: github actions chromium webgpu + publish workflow`
 
-- [ ] `.github/workflows/test.yml`
-  - [ ] Ubuntu latest + Chrome stable
-  - [ ] Flags : `--enable-unsafe-webgpu --enable-features=Vulkan`
-  - [ ] Jobs : `pnpm test:node`, `pnpm test:layer1`, `pnpm test:layer2`, `pnpm test:layer3`
-- [ ] `.github/workflows/publish.yml`
-  - [ ] Trigger : push tag `v*`
-  - [ ] `pnpm build` + `npm publish --access public`
+- [x] `.github/workflows/test.yml`
+  - [x] Ubuntu latest + Chrome stable
+  - [x] Flags : `--enable-unsafe-webgpu --enable-features=Vulkan`
+  - [x] Jobs : `pnpm test:node`, `pnpm test:layer1`, `pnpm test:layer2`, `pnpm test:layer3`
+- [x] `.github/workflows/publish.yml`
+  - [x] Trigger : push tag `v*`
+  - [x] `pnpm build` + `npm publish --access public`
 
 ---
 
@@ -280,4 +280,4 @@ Test manuel sur Metal (machine courante, M-series) :
 | 5 — Test layer 2 | ✅ | — |
 | 6 — Vanity helper | ✅ | — |
 | 7 — Test layer 3 | ✅ | — |
-| 8 — CI | ❌ | layer3 vert |
+| 8 — CI | ✅ | — |
