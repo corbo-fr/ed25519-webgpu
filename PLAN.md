@@ -195,7 +195,7 @@ Dépend de 2c. Formules étendues de Hisil 2008 (unified, pas de cas spéciaux).
 
 ---
 
-## Phase 6 — Vanity helper ❌
+## Phase 6 — Vanity helper ✅
 
 > **Commit :** `feat(vanity): matcher, finder, primitives export`
 
@@ -203,14 +203,14 @@ Dépend de 2c. Formules étendues de Hisil 2008 (unified, pas de cas spéciaux).
   - [x] `encodePrefix(prefix: string): Uint8Array` — encode en bytes base58 comparables
   - [x] `encodeSuffix(suffix: string): Uint8Array`
   - [x] `matches(pubkey58: string, prefix, suffix, caseSensitive): boolean`
-- [ ] `src/vanity/finder.ts`
-  - [ ] `findVanity(gpu, opts): AsyncIterable<VanityHit>`
-  - [ ] Boucle rAF (ou `setImmediate` en Worker context)
-  - [ ] Respect `opts.signal` (AbortSignal) → nettoyage buffers GPU
-  - [ ] Appel `opts.onProgress` toutes les N itérations
-  - [ ] `opts.encodeAddress` par défaut = base58 Solana
+- [x] `src/vanity/finder.ts`
+  - [x] `findVanity(gpu, opts): AsyncIterable<VanityHit>`
+  - [x] Boucle rAF (ou `setImmediate` en Worker context)
+  - [x] Respect `opts.signal` (AbortSignal) → nettoyage buffers GPU
+  - [x] Appel `opts.onProgress` toutes les N itérations
+  - [x] `opts.encodeAddress` par défaut = base58 Solana
 - [x] `src/vanity/index.ts` — export `findVanity`, `VanityHit`, `VanityOptions`
-- [ ] `src/primitives/index.ts` — export strings WGSL brutes (SHA512_WGSL, FIELD25519_WGSL, etc.)
+- [x] `src/primitives/index.ts` — export strings WGSL brutes (SHA512_WGSL, FIELD25519_WGSL, etc.)
 
 ---
 
@@ -278,6 +278,6 @@ Test manuel sur Metal (machine courante, M-series) :
 | 3 — Test layer 1 (scalar-mult) | ✅ | — |
 | 4 — TypeScript core | ✅ | — |
 | 5 — Test layer 2 | ✅ | — |
-| 6 — Vanity helper | 🔄 | layer2 vert |
+| 6 — Vanity helper | ✅ | — |
 | 7 — Test layer 3 | ❌ | toi : `pnpm test:layer3` |
 | 8 — CI | ❌ | layer3 vert |
