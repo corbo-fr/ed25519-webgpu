@@ -222,8 +222,8 @@ Dépend de 2c. Formules étendues de Hisil 2008 (unified, pas de cas spéciaux).
   - [x] Préfixe "a" → hit trouvé en < 3s
   - [x] Vérifier le hit : recalculer pubkey depuis seed via noble, comparer
   - [x] Préfixe "11" (moins commun)
-- [ ] `test/gpu/vanity/suffix.test.ts`
-  - [ ] Suffixe "z" → hit trouvé en < 3s, vérifié
+- [x] `test/gpu/vanity/suffix.test.ts`
+  - [x] Suffixe "z" → hit trouvé en < 3s, vérifié
 - [ ] `test/gpu/vanity/abort.test.ts`
   - [ ] AbortSignal déclenché à 200ms → `findVanity` se termine proprement (pas de throw non catchée)
   - [ ] Après abort : aucun GPUBuffer actif (via `device.createBuffer` spy ou compteur manuel)
