@@ -224,9 +224,9 @@ Dépend de 2c. Formules étendues de Hisil 2008 (unified, pas de cas spéciaux).
   - [x] Préfixe "11" (moins commun)
 - [x] `test/gpu/vanity/suffix.test.ts`
   - [x] Suffixe "z" → hit trouvé en < 3s, vérifié
-- [ ] `test/gpu/vanity/abort.test.ts`
-  - [ ] AbortSignal déclenché à 200ms → `findVanity` se termine proprement (pas de throw non catchée)
-  - [ ] Après abort : aucun GPUBuffer actif (via `device.createBuffer` spy ou compteur manuel)
+- [x] `test/gpu/vanity/abort.test.ts`
+  - [x] AbortSignal déclenché à 200ms → `findVanity` se termine proprement (pas de throw non catchée)
+  - [x] Après abort : aucun GPUBuffer actif (via `device.createBuffer` spy ou compteur manuel)
 
 **Gate layer 3 :** `pnpm test:layer3` → tous verts avant de continuer
 
@@ -279,5 +279,5 @@ Test manuel sur Metal (machine courante, M-series) :
 | 4 — TypeScript core | ✅ | — |
 | 5 — Test layer 2 | ✅ | — |
 | 6 — Vanity helper | ✅ | — |
-| 7 — Test layer 3 | ❌ | toi : `pnpm test:layer3` |
+| 7 — Test layer 3 | ✅ | — |
 | 8 — CI | ❌ | layer3 vert |
