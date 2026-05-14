@@ -50,25 +50,25 @@ Oui, avec les garanties suivantes (tout commité) :
 
 ---
 
-## Phase 1 — Dev link ❌
+## Phase 1 — Dev link ✅
 
 > **Projet :** `vanity_keypair_generator`
 > **Commit :** `chore: link webgpu-ed25519 local, add build:watch`
 
-- [ ] **1.1** Dans `vanity_keypair_generator/package.json` → ajouter dans `dependencies` :
+- [x] **1.1** Dans `vanity_keypair_generator/package.json` → ajouter dans `dependencies` :
   ```json
   "webgpu-ed25519": "file:../webgpu-ed25519"
   ```
-- [ ] **1.2** `pnpm install` dans vanity → vérifier symlink `node_modules/webgpu-ed25519`
-- [ ] **1.3** Dans `webgpu-ed25519/package.json` → ajouter script :
+- [x] **1.2** `pnpm install` dans vanity → vérifier symlink `node_modules/webgpu-ed25519`
+- [x] **1.3** Dans `webgpu-ed25519/package.json` → ajouter script :
   ```json
   "build:watch": "tsc -p tsconfig.build.json --watch"
   ```
-- [ ] **1.4** Vérifier que `import { isWebGPUSupported } from 'webgpu-ed25519'` compile sans erreur dans vanity
+- [x] **1.4** `isWebGPUSupported` exporté dans `dist/index.js` ✅
 
 ---
 
-## Phase 2 — GPU worker ❌
+## Phase 2 — GPU worker ❌ (next)
 
 > **Projet :** `vanity_keypair_generator`
 > **Commit :** `feat(gpu): vanity-gpu-worker — même protocole que vanity-worker`
@@ -150,7 +150,7 @@ Critères de validation :
 
 | Phase | Statut | Bloqué par |
 |---|---|---|
-| 1 — Dev link local | ❌ | — |
+| 1 — Dev link local | ✅ | — |
 | 2 — GPU worker | ❌ | Phase 1 |
 | 3 — Feature detect + dispatch | ❌ | Phase 2 |
 | 4 — UI badge | ❌ | Phase 3 |
