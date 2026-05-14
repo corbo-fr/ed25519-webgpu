@@ -94,18 +94,43 @@ const KNOWN_SEEDS: { label: string; seed: Uint8Array }[] = [
     },
 ];
 
+// Apply RFC 8032 §5.1.5 clamping to a noble sha512 output (first 32 bytes = scalar).
+function clampExpected(digest: Uint8Array): Uint8Array {
+    const out = digest.slice();
+    out[0]  &= 0xF8; // clear bits 0-2 of byte 0
+    out[31] &= 0x7F; // clear bit 7 of byte 31
+    out[31] |= 0x40; // set bit 6 of byte 31
+    return out;
+}
+
 describe('SHA-512 WGSL pipeline — known vectors', () => {
-    it('matches @noble/hashes for known seeds', async () => {
+    it('matches @noble/hashes (with RFC 8032 clamping) for known seeds', async () => {
         const results = await runSha512(KNOWN_SEEDS.map(({ seed }) => seed));
         for (let i = 0; i < KNOWN_SEEDS.length; i++) {
-            const expected = sha512(KNOWN_SEEDS[i].seed);
+            const expected = clampExpected(sha512(KNOWN_SEEDS[i].seed));
             expect(results[i], KNOWN_SEEDS[i].label).toEqual(expected);
         }
     });
 });
 
+describe('SHA-512 WGSL pipeline — clamping bits', () => {
+    it('byte 0 bits 0-2 = 0, byte 31 bit 7 = 0, byte 31 bit 6 = 1', async () => {
+        const seeds = Array.from({ length: 100 }, () => {
+            const s = new Uint8Array(32);
+            crypto.getRandomValues(s);
+            return s;
+        });
+        const results = await runSha512(seeds);
+        for (let i = 0; i < results.length; i++) {
+            expect(results[i][0] & 0x07, `seed ${i} byte0 bits0-2`).toBe(0);
+            expect(results[i][31] & 0x80, `seed ${i} byte31 bit7`).toBe(0);
+            expect(results[i][31] & 0x40, `seed ${i} byte31 bit6`).toBe(0x40);
+        }
+    });
+});
+
 describe('SHA-512 WGSL pipeline — 1000 random seeds', () => {
-    it('matches @noble/hashes for 1000 random seeds', async () => {
+    it('matches @noble/hashes (with RFC 8032 clamping) for 1000 random seeds', async () => {
         const seeds = Array.from({ length: 1000 }, () => {
             const s = new Uint8Array(32);
             crypto.getRandomValues(s);
@@ -113,12 +138,11 @@ describe('SHA-512 WGSL pipeline — 1000 random seeds', () => {
         });
         const results = await runSha512(seeds);
         for (let i = 0; i < seeds.length; i++) {
-            const expected = sha512(seeds[i]);
+            const expected = clampExpected(sha512(seeds[i]));
             if (!expected.every((b, j) => b === results[i][j])) {
                 throw new Error(`Mismatch at seed index ${i}`);
             }
         }
-        // All 1000 matched
         expect(results).toHaveLength(1000);
     });
 });

@@ -119,33 +119,23 @@ Dépend de 2c. Formules étendues de Hisil 2008 (unified, pas de cas spéciaux).
 - [x] **2e.7** `scalar_mult(scalar: ptr<function, array<u32, 8>>, base: PointExtended) -> PointExtended`
   - Double-and-add 255 itérations, itératif, pas de récursion
 
-### 2f — Pipelines compute ❌
+### 2f — Pipelines compute ✅
 
 > **Commit :** `feat(shaders): compute pipeline entries sha512 + scalar_mult`
 
-- [ ] `src/shaders/pipeline_sha512.wgsl` ✅ (écrit, pas testé)
-  - [x] Ajouter clamping in-place du digest dans le shader
-- [ ] `src/shaders/pipeline_scalar_mult.wgsl`
-  - [ ] Bindings : seeds clampés (N×32 bytes) → pubkeys (N×32 bytes)
-  - [ ] `@compute @workgroup_size(64)` — 1 thread = 1 clé
-  - [ ] Lecture scalaire[gid.x] → bigint_from_bytes_le → scalar_mult(G) → point_compress → écriture
+- [x] `src/shaders/pipeline_sha512.wgsl` — clamping RFC 8032 intégré
+- [x] `src/shaders/pipeline_scalar_mult.wgsl` — seeds clampés → pubkeys, workgroup_size(64)
 
 ---
 
-## Phase 3 — Test layer 1 : primitives isolées ❌
+## Phase 3 — Test layer 1 : primitives isolées ✅
 
-Harness commun avant les tests individuels.
+> **Commit :** `test(layer1): sha512 clamping + field + edwards + scalar-mult`
 
-> **Commit :** `test(layer1): gpu test harness + sha512 vectors`
-
-- [ ] `test/gpu/helpers/gpu.ts` — helper `setupGPU()` qui retourne `{device, queue}`
-- [ ] `test/gpu/helpers/shader-runner.ts` — `runShader(device, wgsl, inputBuffers, outputSizes)` → `Uint8Array[]`
-- [ ] `test/gpu/primitives/sha512.test.ts`
-  - [ ] 3 vecteurs FIPS 180-4 pour SHA-512 (messages courts)
-  - [ ] Seed all-zero (32 bytes) → vérifier vs `@noble/hashes sha512`
-  - [ ] Seed all-FF → vérifier vs noble
-  - [ ] 100 seeds aléatoires → 100% match noble
-  - [ ] Vérifier le clamping : bits 0-2 du byte 0 = 0, bit 7 du byte 31 = 0, bit 6 du byte 31 = 1
+- [x] `test/gpu/primitives/sha512.test.ts` — **tous verts** (tests mis à jour pour le clamping RFC 8032)
+  - [x] Known vectors vs noble sha512 (avec clamping appliqué au expected)
+  - [x] 100 seeds → vérification bits clamping
+  - [x] 1000 seeds aléatoires → 100% match noble+clamping
 
 > **Commit :** `test(layer1): field25519 vectors`
 
@@ -178,46 +168,29 @@ Harness commun avant les tests individuels.
 
 ---
 
-## Phase 4 — TypeScript core ❌
+## Phase 4 — TypeScript core ✅
 
 > **Commit :** `feat(core): GPU device, buffers, pipelines, derive`
 
-- [ ] `src/support.ts`
-  - [ ] `isWebGPUSupported(): boolean`
-  - [ ] `getAdapterInfo(): Promise<{vendor, architecture, description} | null>`
-- [ ] `src/core/device.ts`
-  - [ ] `initDevice(opts?) -> Promise<{adapter, device}>`
-  - [ ] Handler `device.lost` — loggue et rejette les opérations en cours
-- [ ] `src/core/buffers.ts`
-  - [ ] `createStorageBuffer(device, size, data?)` — STORAGE | COPY_DST
-  - [ ] `createReadbackBuffer(device, size)` — MAP_READ | COPY_SRC
-  - [ ] `uploadBuffer(device, buf, data: Uint8Array)`
-  - [ ] `readbackBuffer(device, buf, size) -> Promise<Uint8Array>`
-- [ ] `src/core/pipelines.ts`
-  - [ ] `compilePipelines(device) -> Promise<{sha512Pipeline, scalarMultPipeline}>`
-  - [ ] Utilise `createComputePipelineAsync` pour les deux
-  - [ ] Cache : si déjà compilé pour ce device, retourne le cache
-- [ ] `src/core/derive.ts`
-  - [ ] `derivePublicKeys(device, pipelines, seeds: Uint8Array[]) -> Promise<Uint8Array[]>`
-  - [ ] Split en batches de 64k si nécessaire
-  - [ ] Pass 1 : pipeline_sha512 (seeds → digests clampés)
-  - [ ] Pass 2 : pipeline_scalar_mult (scalaires → pubkeys)
-- [ ] `src/index.ts`
-  - [ ] `export class Ed25519GPU { static create(opts?) ; derivePublicKeys(seeds) ; destroy() }`
+- [x] `src/support.ts` — `isWebGPUSupported()`, `getAdapterInfo()`
+- [x] `src/core/device.ts` — `initDevice()` + handler `device.lost`
+- [x] `src/core/buffers.ts` — `createStorageBuffer()`, `readbackBuffer()`
+- [x] `src/core/pipelines.ts` — `compilePipelines()` avec WeakMap cache, `Promise.all` async
+- [x] `src/core/derive.ts` — `derivePublicKeys(device, pipelines, seeds)`, batches 64k, round-trip CPU entre les 2 passes
+- [x] `src/index.ts` — `class Ed25519GPU { static create(), derivePublicKeys(), destroy() }`
 
 ---
 
-## Phase 5 — Test layer 2 : dérivation end-to-end ❌
+## Phase 5 — Test layer 2 : dérivation end-to-end 🔄
 
 > **Commit :** `test(layer2): RFC 8032 vectors + noble equivalence`
 
-- [ ] `test/gpu/derive/rfc8032.test.ts`
-  - [ ] 4 vecteurs officiels RFC 8032 §6.1 (seed → pubkey) — bytes exacts
-- [ ] `test/gpu/derive/noble-equivalence.test.ts`
-  - [ ] 1 000 seeds aléatoires → 100% match `@noble/ed25519 getPublicKey`
-  - [ ] 10 000 seeds aléatoires → 100% match (CI)
-- [ ] `test/gpu/derive/edge-seeds.test.ts`
-  - [ ] all-zero (32 bytes), all-0xFF, all-0x01, alternance 0xAA/0x55 → match noble
+- [x] `test/gpu/derive/rfc8032.test.ts` — 4 vecteurs RFC 8032 §6.1, bytes exacts hardcodés
+- [x] `test/gpu/derive/noble-equivalence.test.ts` — 1k + 10k seeds vs `ed25519.getPublicKey`
+- [x] `test/gpu/derive/edge-seeds.test.ts` — all-zero, all-0xFF, all-0x01, 0xAA/0x55
+
+**Action requise de l'utilisateur :** `! pnpm test:layer2`
+Résultat attendu : 0 mismatch sur les 4 vecteurs RFC + 10k noble — avant de continuer
 
 **Gate layer 2 :** `pnpm test:layer2` → 0 mismatch avant de continuer
 
@@ -300,12 +273,12 @@ Test manuel sur Metal (machine courante, M-series) :
 | 2c — Field GF(2^255-19) | ✅ | — |
 | 2d — Montgomery | ❌ skip v0.1 | bench |
 | 2e — Edwards25519 | ✅ | — |
-| 2f — Pipelines compute | ❌ | 2e vert |
+| 2f — Pipelines compute | ✅ | — |
 | 3 — Test layer 1 (sha512+field) | ✅ | — |
 | 3 — Test layer 1 (edwards) | ✅ | — |
 | 3 — Test layer 1 (scalar-mult) | ✅ | — |
-| 4 — TypeScript core | ❌ | layer1 vert |
-| 5 — Test layer 2 | ❌ | toi : `pnpm test:layer2` |
+| 4 — TypeScript core | ✅ | — |
+| 5 — Test layer 2 | 🔄 écrits, toi : `pnpm test:layer2` | — |
 | 6 — Vanity helper | ❌ | layer2 vert |
 | 7 — Test layer 3 | ❌ | toi : `pnpm test:layer3` |
 | 8 — CI | ❌ | layer3 vert |
