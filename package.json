@@ -45,6 +45,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "build:watch": "tsc -p tsconfig.build.json --watch",
     "test": "vitest run",
     "test:node": "vitest run --project node",
     "test:gpu": "vitest run --project browser",
