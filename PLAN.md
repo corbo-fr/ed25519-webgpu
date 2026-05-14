@@ -181,18 +181,17 @@ Dépend de 2c. Formules étendues de Hisil 2008 (unified, pas de cas spéciaux).
 
 ---
 
-## Phase 5 — Test layer 2 : dérivation end-to-end 🔄
+## Phase 5 — Test layer 2 : dérivation end-to-end ✅
 
-> **Commit :** `test(layer2): RFC 8032 vectors + noble equivalence`
+> **Commit :** `test(layer2): fix RFC 8032 seed transcription errors (vec1, vec2)`
 
 - [x] `test/gpu/derive/rfc8032.test.ts` — 4 vecteurs RFC 8032 §6.1, bytes exacts hardcodés
 - [x] `test/gpu/derive/noble-equivalence.test.ts` — 1k + 10k seeds vs `ed25519.getPublicKey`
 - [x] `test/gpu/derive/edge-seeds.test.ts` — all-zero, all-0xFF, all-0x01, 0xAA/0x55
 
-**Action requise de l'utilisateur :** `! pnpm test:layer2`
-Résultat attendu : 0 mismatch sur les 4 vecteurs RFC + 10k noble — avant de continuer
+> **Bug corrigé :** les seeds vec1 et vec2 dans `rfc8032.test.ts` (et `sha512.test.ts`) avaient les 2 derniers bytes incorrects (erreurs de transcription depuis le RFC 8032 §7.1). Le GPU, noble et OpenSSL étaient tous corrects — c'était uniquement les valeurs hardcodées du test qui étaient fausses. Fix : vec1 `3d55` → `7f60`, vec2 `4d0b592b` → `4fb8a6fb`.
 
-**Gate layer 2 :** `pnpm test:layer2` → 0 mismatch avant de continuer
+**Gate layer 2 :** `pnpm test:layer2` → ✅ 4/4 verts (RFC exact + 10k noble + edge seeds)
 
 ---
 
@@ -278,7 +277,7 @@ Test manuel sur Metal (machine courante, M-series) :
 | 3 — Test layer 1 (edwards) | ✅ | — |
 | 3 — Test layer 1 (scalar-mult) | ✅ | — |
 | 4 — TypeScript core | ✅ | — |
-| 5 — Test layer 2 | 🔄 écrits, toi : `pnpm test:layer2` | — |
+| 5 — Test layer 2 | ✅ | — |
 | 6 — Vanity helper | ❌ | layer2 vert |
 | 7 — Test layer 3 | ❌ | toi : `pnpm test:layer3` |
 | 8 — CI | ❌ | layer3 vert |
