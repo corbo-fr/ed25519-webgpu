@@ -68,7 +68,7 @@ Oui, avec les garanties suivantes (tout commité) :
 
 ---
 
-## Phase 2 — GPU worker ❌ (next)
+## Phase 2 — GPU worker ✅
 
 > **Projet :** `vanity_keypair_generator`
 > **Commit :** `feat(gpu): vanity-gpu-worker — même protocole que vanity-worker`
@@ -79,14 +79,14 @@ pour que `keypair-state.svelte.ts` n'ait pas à changer.
 Format secretKey actuel (WASM) : 64 bytes = `seed(32) || pubkey(32)`, puis base58.
 Notre GPU retourne `hit.seed` (32 bytes) + `hit.publicKey` (32 bytes) → concat → base58.
 
-- [ ] **2.1** Créer `src/routes/vanity-gpu-worker.ts`
+- [x] **2.1** Créer `src/routes/vanity-gpu-worker.ts`
   - `Ed25519GPU.create()` au démarrage
   - `onmessage` : `start` → lance `findVanity()`, `stop` → `controller.abort()`
-  - `found` : `{ type: 'found', result: { address, privateKey: base58(seed||pubkey) }, tries }`
+  - `found` : `{ type: 'found', result: { address, privateKey: Uint8Array(seed||pubkey) }, tries }`
   - `progress` : `{ type: 'progress', tries, bestScore: 0, bestAddress: '', bestPrivateKey: '' }`
     - Note : `findVanity` ne remonte pas de "meilleur partiel" → bestScore=0 acceptable
-  - `stopped` : `{ type: 'stopped', tries }`
-  - Si WebGPU indispo : `postMessage({ type: 'error', message: 'WebGPU not available' })`
+  - `stopped` : `{ type: 'stopped', tries, bestScore: 0, preview: null }`
+  - Si WebGPU indispo : `postMessage({ type: 'error', message: '...' })`
 
 ---
 
@@ -151,7 +151,7 @@ Critères de validation :
 | Phase | Statut | Bloqué par |
 |---|---|---|
 | 1 — Dev link local | ✅ | — |
-| 2 — GPU worker | ❌ | Phase 1 |
+| 2 — GPU worker | ✅ | — |
 | 3 — Feature detect + dispatch | ❌ | Phase 2 |
 | 4 — UI badge | ❌ | Phase 3 |
 | 5 — Build + smoke test | ❌ | Phase 4 |
