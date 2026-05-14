@@ -218,10 +218,10 @@ Dépend de 2c. Formules étendues de Hisil 2008 (unified, pas de cas spéciaux).
 
 > **Commit :** `test(layer3): vanity prefix, suffix, abort`
 
-- [ ] `test/gpu/vanity/prefix.test.ts`
-  - [ ] Préfixe "a" → hit trouvé en < 3s
-  - [ ] Vérifier le hit : recalculer pubkey depuis seed via noble, comparer
-  - [ ] Préfixe "11" (moins commun)
+- [x] `test/gpu/vanity/prefix.test.ts`
+  - [x] Préfixe "a" → hit trouvé en < 3s
+  - [x] Vérifier le hit : recalculer pubkey depuis seed via noble, comparer
+  - [x] Préfixe "11" (moins commun)
 - [ ] `test/gpu/vanity/suffix.test.ts`
   - [ ] Suffixe "z" → hit trouvé en < 3s, vérifié
 - [ ] `test/gpu/vanity/abort.test.ts`
