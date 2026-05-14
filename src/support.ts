@@ -6,6 +6,6 @@ export async function getAdapterInfo(): Promise<{ vendor: string; architecture: 
     if (!isWebGPUSupported()) return null;
     const adapter = await navigator.gpu.requestAdapter();
     if (!adapter) return null;
-    const info = await adapter.requestAdapterInfo();
+    const info = adapter.info;
     return { vendor: info.vendor, architecture: info.architecture, description: info.description };
 }

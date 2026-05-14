@@ -255,8 +255,9 @@ pnpm test:layer3   # prefix, suffix, abort, no-leak — tous verts
 ```
 
 Test manuel sur Metal (machine courante, M-series) :
-- [ ] Mêmes seeds que layer2 → 0 mismatch vs noble sur Metal
-- [ ] `findVanity` préfixe "sol" → hit trouvé, vérifié par noble
+- [x] Mêmes seeds que layer2 → 0 mismatch vs noble sur Metal (`pnpm test:layer2` ✅)
+- [x] `findVanity` préfixe "GPU" → hit trouvé en 757ms, vérifié par noble ✅
+  - Note : "sol" invalide en base58 ('l' exclu) → préfixe "GPU" utilisé à la place
 
 **Si un seul mismatch subsiste : ne pas passer au Step 3.** Une lib GPU silencieusement fausse génère des keypairs invalides.
 

@@ -3,7 +3,7 @@ export function createStorageBuffer(device: GPUDevice, size: number, data?: Uint
         size,
         usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
     });
-    if (data) device.queue.writeBuffer(buf, 0, data);
+    if (data) device.queue.writeBuffer(buf, 0, data.buffer as ArrayBuffer, data.byteOffset, data.byteLength);
     return buf;
 }
 
