@@ -209,7 +209,7 @@ Dépend de 2c. Formules étendues de Hisil 2008 (unified, pas de cas spéciaux).
   - [ ] Respect `opts.signal` (AbortSignal) → nettoyage buffers GPU
   - [ ] Appel `opts.onProgress` toutes les N itérations
   - [ ] `opts.encodeAddress` par défaut = base58 Solana
-- [ ] `src/vanity/index.ts` — export `findVanity`, `VanityHit`, `VanityOptions`
+- [x] `src/vanity/index.ts` — export `findVanity`, `VanityHit`, `VanityOptions`
 - [ ] `src/primitives/index.ts` — export strings WGSL brutes (SHA512_WGSL, FIELD25519_WGSL, etc.)
 
 ---
