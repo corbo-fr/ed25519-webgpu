@@ -30,22 +30,47 @@ function yieldControl(): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, 0));
 }
 
+/** A keypair whose address matches the requested pattern. */
 export type VanityHit = {
+    /** Raw 32-byte seed (Ed25519 private key). */
     seed: Uint8Array;
+    /** Compressed 32-byte Ed25519 public key. */
     publicKey: Uint8Array;
+    /** Encoded public key (base58 by default). */
     address: string;
 };
 
 export type VanityOptions = {
+    /** Required address prefix (base58 characters only). */
     prefix?: string;
+    /** Required address suffix (base58 characters only). */
     suffix?: string;
+    /** Whether prefix/suffix matching is case-sensitive. Default: true. */
     caseSensitive?: boolean;
+    /** Number of random keypairs generated per GPU batch. Default: 1024. */
     batchSize?: number;
+    /** Pass an AbortController signal to stop the search. */
     signal?: AbortSignal;
+    /** Called after each batch with the cumulative number of keys checked. */
     onProgress?: (keysChecked: number) => void;
+    /**
+     * Custom address encoder. Receives a 32-byte public key, returns an address string.
+     * Defaults to base58 (Solana). Override for Stellar (base32), TON, etc.
+     */
     encodeAddress?: (pubkey: Uint8Array) => string;
 };
 
+/**
+ * Async generator that yields keypairs whose address matches the given prefix/suffix.
+ * Runs indefinitely until aborted via `signal` or the generator is returned/thrown.
+ *
+ * @example
+ * const gpu = await Ed25519GPU.create();
+ * const controller = new AbortController();
+ * for await (const hit of findVanity(gpu, { prefix: 'ABC', signal: controller.signal })) {
+ *   console.log(hit.address, hit.seed);
+ * }
+ */
 export async function* findVanity(
     gpu: Ed25519GPU,
     opts: VanityOptions = {},

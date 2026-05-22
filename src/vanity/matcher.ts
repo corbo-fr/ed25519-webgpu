@@ -11,11 +11,13 @@ function toLower(b: number): number {
   return b >= 65 && b <= 90 ? b + 32 : b;
 }
 
+/** Validates and encodes a base58 prefix string. Throws on invalid characters. */
 export function encodePrefix(prefix: string): Uint8Array {
   validate(prefix);
   return enc.encode(prefix);
 }
 
+/** Validates and encodes a base58 suffix string. Throws on invalid characters. */
 export function encodeSuffix(suffix: string): Uint8Array {
   validate(suffix);
   return enc.encode(suffix);
