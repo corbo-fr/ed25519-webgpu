@@ -1,9 +1,4 @@
 export { isWebGPUSupported, getAdapterInfo } from './support.js';
-export { initDevice } from './core/device.js';
-export type { DeviceHandle } from './core/device.js';
-export { compilePipelines } from './core/pipelines.js';
-export type { Pipelines } from './core/pipelines.js';
-export { derivePublicKeys } from './core/derive.js';
 
 import { initDevice } from './core/device.js';
 import { compilePipelines, type Pipelines } from './core/pipelines.js';
