@@ -19,6 +19,11 @@ export class Ed25519GPU {
         return new Ed25519GPU(device, pipelines);
     }
 
+    static async fromDevice(device: GPUDevice): Promise<Ed25519GPU> {
+        const pipelines = await compilePipelines(device);
+        return new Ed25519GPU(device, pipelines);
+    }
+
     async derivePublicKeys(seeds: Uint8Array[]): Promise<Uint8Array[]> {
         return derivePublicKeys(this.device, this.pipelines, seeds);
     }
