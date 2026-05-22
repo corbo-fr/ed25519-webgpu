@@ -39,6 +39,7 @@
     "compute-shader"
   ],
   "license": "MIT OR Apache-2.0",
+  "sideEffects": false,
   "repository": {
     "type": "git",
     "url": "https://github.com/trixky/webgpu-ed25519.git"
