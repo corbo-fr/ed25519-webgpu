@@ -11,6 +11,3 @@ export async function initDevice(opts?: GPURequestAdapterOptions): Promise<Devic
     return { adapter, device };
 }
 
-export async function createDevice(): Promise<GPUDevice> {
-    return (await initDevice()).device;
-}
