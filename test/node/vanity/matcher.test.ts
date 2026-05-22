@@ -104,3 +104,25 @@ describe('matches — no constraints', () => {
         expect(matches('', undefined, undefined, true)).toBe(true);
     });
 });
+
+describe('encodePrefix / encodeSuffix — empty string', () => {
+    it('encodePrefix("") does not throw and returns empty Uint8Array', () => {
+        expect(() => encodePrefix('')).not.toThrow();
+        expect(encodePrefix('')).toEqual(new Uint8Array([]));
+    });
+
+    it('encodeSuffix("") does not throw and returns empty Uint8Array', () => {
+        expect(() => encodeSuffix('')).not.toThrow();
+        expect(encodeSuffix('')).toEqual(new Uint8Array([]));
+    });
+});
+
+describe('matches — zero-length constraint Uint8Arrays', () => {
+    it('empty prefix Uint8Array skips prefix check → true', () => {
+        expect(matches('anything', new Uint8Array([]), undefined, true)).toBe(true);
+    });
+
+    it('empty prefix and empty suffix both skip → true', () => {
+        expect(matches('', new Uint8Array([]), new Uint8Array([]), true)).toBe(true);
+    });
+});
