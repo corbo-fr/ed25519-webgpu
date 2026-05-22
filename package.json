@@ -8,14 +8,17 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "browser": "./dist/index.js",
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
     "./vanity": {
+      "browser": "./dist/vanity/index.js",
       "import": "./dist/vanity/index.js",
       "types": "./dist/vanity/index.d.ts"
     },
     "./primitives": {
+      "browser": "./dist/primitives/index.js",
       "import": "./dist/primitives/index.js",
       "types": "./dist/primitives/index.d.ts"
     }
