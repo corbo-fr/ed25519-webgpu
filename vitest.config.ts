@@ -1,4 +1,13 @@
-import { defineConfig } from 'vitest/config'
+import { defineConfig, type Plugin } from 'vitest/config'
+
+const wgslPlugin: Plugin = {
+  name: 'wgsl',
+  transform(src, id) {
+    if (id.endsWith('.wgsl')) {
+      return { code: `export default ${JSON.stringify(src)}`, map: null }
+    }
+  },
+}
 
 export default defineConfig({
   test: {
@@ -11,6 +20,7 @@ export default defineConfig({
         },
       },
       {
+        plugins: [wgslPlugin],
         test: {
           name: 'browser',
           include: ['test/gpu/**/*.test.ts'],
