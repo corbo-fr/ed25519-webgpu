@@ -1,4 +1,5 @@
 import type { Ed25519GPU } from '../index.js';
+import { computePrefixBounds, computeSuffixParams } from './bounds.js';
 import { encodePrefix, encodeSuffix, matches } from './matcher.js';
 
 const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
@@ -88,6 +89,22 @@ export async function* findVanity(
     const prefixBytes = prefix ? encodePrefix(prefix) : undefined;
     const suffixBytes = suffix ? encodeSuffix(suffix) : undefined;
 
+    // GPU vanity filter is only valid for the default base58 encoder, case-sensitive.
+    const useGpuFilter =
+        encodeAddress === base58Encode &&
+        caseSensitive &&
+        (prefix !== undefined || suffix !== undefined);
+
+    const bounds      = useGpuFilter && prefix ? computePrefixBounds(prefix) : null;
+    const suffixP     = useGpuFilter && suffix ? computeSuffixParams(suffix) : null;
+    const canGpuPrefix = bounds !== null;
+    const canGpuSuffix = suffixP !== null;
+    const activeGpuFilter = useGpuFilter && (canGpuPrefix || canGpuSuffix);
+
+    // Default empty L/H (all zeros / all max) used when the respective filter is off.
+    const ZERO_U32 = new Uint32Array(8);
+    const MAX_U32  = new Uint32Array(8).fill(0xFFFFFFFF);
+
     let keysChecked = 0;
 
     while (!signal?.aborted) {
@@ -95,14 +112,43 @@ export async function* findVanity(
             crypto.getRandomValues(new Uint8Array(32))
         );
 
-        const pubkeys = await gpu.derivePublicKeys(seeds);
+        if (activeGpuFilter) {
+            // GPU vanity path: only hit seeds are returned, CPU re-verifies each.
+            const hitSeeds = await (gpu as any)._vanityBatch(seeds, {
+                L: bounds?.L ?? ZERO_U32,
+                H: bounds?.H ?? MAX_U32,
+                hasPrefix: canGpuPrefix,
+                suffixMod: suffixP?.mod ?? 0,
+                suffixVal: suffixP?.val ?? 0,
+                hasSuffix: canGpuSuffix,
+            });
 
-        if (signal?.aborted) break;
+            if (signal?.aborted) break;
 
-        for (let i = 0; i < batchSize; i++) {
-            const address = encodeAddress(pubkeys[i]);
-            if (matches(address, prefixBytes, suffixBytes, caseSensitive)) {
-                yield { seed: seeds[i], publicKey: pubkeys[i], address };
+            if (hitSeeds.length > 0) {
+                // Re-derive pubkeys for hit seeds (GPU pipeline, correct by construction).
+                const pubkeys = await gpu.derivePublicKeys(hitSeeds);
+
+                if (signal?.aborted) break;
+
+                for (let i = 0; i < hitSeeds.length; i++) {
+                    const address = encodeAddress(pubkeys[i]);
+                    if (matches(address, prefixBytes, suffixBytes, caseSensitive)) {
+                        yield { seed: hitSeeds[i], publicKey: pubkeys[i], address };
+                    }
+                }
+            }
+        } else {
+            // Fallback: full derive + CPU matching (no filter, custom encoder, case-insensitive…).
+            const pubkeys = await gpu.derivePublicKeys(seeds);
+
+            if (signal?.aborted) break;
+
+            for (let i = 0; i < batchSize; i++) {
+                const address = encodeAddress(pubkeys[i]);
+                if (matches(address, prefixBytes, suffixBytes, caseSensitive)) {
+                    yield { seed: seeds[i], publicKey: pubkeys[i], address };
+                }
             }
         }
 

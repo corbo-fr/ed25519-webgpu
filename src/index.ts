@@ -4,6 +4,7 @@ import { initDevice } from './core/device.js';
 import { compilePipelines, type Pipelines } from './core/pipelines.js';
 import { computeGTable, createGTableBuffer } from './core/table.js';
 import { derivePublicKeys } from './core/derive.js';
+import { runVanityBatch, type VanityBatchOpts } from './core/vanity.js';
 
 /** High-level GPU-accelerated Ed25519 key derivation. */
 export class Ed25519GPU {
@@ -51,6 +52,15 @@ export class Ed25519GPU {
      */
     async derivePublicKeys(seeds: Uint8Array[]): Promise<Uint8Array[]> {
         return derivePublicKeys(this.device, this.pipelines, this.gTableBuf, seeds);
+    }
+
+    /**
+     * Run a single GPU vanity batch. Returns raw seeds of keys that passed the
+     * GPU prefix/suffix filter; callers must CPU-verify the results.
+     * @internal used by findVanity
+     */
+    _vanityBatch(seeds: Uint8Array[], opts: VanityBatchOpts): Promise<Uint8Array[]> {
+        return runVanityBatch(this.device, this.pipelines, this.gTableBuf, seeds, opts);
     }
 
     /** Release the underlying GPUDevice. Call when done to free GPU resources. */

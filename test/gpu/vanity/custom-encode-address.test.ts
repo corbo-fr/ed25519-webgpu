@@ -14,7 +14,7 @@ async function getGpu(): Promise<Ed25519GPU> {
 // '0' is invalid base58, so prefix '00' cannot be passed to findVanity directly.
 // Instead we search for 'ab' (first pubkey byte === 0xAB), which proves both that the
 // custom encoder is called and that prefix filtering operates on its output.
-const hexEncode = (pk: Uint8Array) => Buffer.from(pk).toString('hex');
+const hexEncode = (pk: Uint8Array) => Array.from(pk, b => b.toString(16).padStart(2, '0')).join('');
 
 describe('findVanity — custom encodeAddress (hex)', () => {
     it('hit address is hex-encoded and starts with the requested prefix', async () => {
