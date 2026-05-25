@@ -306,5 +306,5 @@ git push
 |---|---|---|
 | 1 — Fused pipeline | ✅ | — |
 | 2 — Fixed-base scalar_mult | ✅ | Step 1 |
-| 3 — GPU prefix/suffix matching | ❌ | Step 2 |
-| 4 — Publish v0.2.0 | ❌ | Step 3 |
+| 3 — GPU prefix/suffix matching | ✅ | Step 2 |
+| 4 — Publish v0.2.0 | ✅ | Step 3 |
