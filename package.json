@@ -61,6 +61,12 @@
     "lint": "tsc --noEmit",
     "bench": "node --experimental-vm-modules bench/benchmark.ts"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "playwright"
+    ]
+  },
   "devDependencies": {
     "@noble/curves": "^1.8.0",
     "@noble/hashes": "^1.7.0",
