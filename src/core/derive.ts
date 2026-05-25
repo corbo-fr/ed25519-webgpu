@@ -6,11 +6,12 @@ const BATCH_SIZE = 65536;
 export async function derivePublicKeys(
     device: GPUDevice,
     pipelines: Pipelines,
+    gTableBuf: GPUBuffer,
     seeds: Uint8Array[],
 ): Promise<Uint8Array[]> {
     const results: Uint8Array[] = [];
     for (let off = 0; off < seeds.length; off += BATCH_SIZE) {
-        const chunk = await deriveBatchFused(device, pipelines, seeds.slice(off, off + BATCH_SIZE));
+        const chunk = await deriveBatchFused(device, pipelines, gTableBuf, seeds.slice(off, off + BATCH_SIZE));
         results.push(...chunk);
     }
     return results;
@@ -19,6 +20,7 @@ export async function derivePublicKeys(
 async function deriveBatchFused(
     device: GPUDevice,
     pipelines: Pipelines,
+    gTableBuf: GPUBuffer,
     seeds: Uint8Array[],
 ): Promise<Uint8Array[]> {
     const N = seeds.length;
@@ -37,6 +39,7 @@ async function deriveBatchFused(
         entries: [
             { binding: 0, resource: { buffer: seedBuf } },
             { binding: 1, resource: { buffer: pubkeyBuf } },
+            { binding: 2, resource: { buffer: gTableBuf } },
         ],
     });
     const enc  = device.createCommandEncoder();
