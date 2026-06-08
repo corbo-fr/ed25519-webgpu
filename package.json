@@ -56,6 +56,7 @@
     "test:layer1": "vitest run --project browser --reporter=verbose test/gpu/primitives",
     "test:layer2": "vitest run --project browser --reporter=verbose test/gpu/derive",
     "test:layer3": "vitest run --project browser --reporter=verbose test/gpu/vanity",
+    "test:perf": "vitest run --project browser --reporter=verbose test/gpu/perf",
     "test:stress": "vitest run --project browser --reporter=verbose test/gpu/stress",
     "test:watch": "vitest --project browser",
     "lint": "tsc --noEmit",

@@ -6,7 +6,7 @@
 // Buffer layout:
 //   binding 0: array<u32> in_seeds    — N×8 u32s, little-endian
 //   binding 1: array<u32> out_pubkeys — N×8 u32s, compressed public key, little-endian
-//   binding 2: array<u32> g_table     — 255×16 u32s (x[8 LE] || y[8 LE] per point)
+//   binding 2: array<u32> g_table     — 255×24 u32s (x[8 LE] || y[8 LE] || t[8 LE] per point)
 
 @group(0) @binding(0) var<storage, read>       in_seeds:    array<u32>;
 @group(0) @binding(1) var<storage, read_write> out_pubkeys: array<u32>;
@@ -49,32 +49,28 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     scalar_bytes[7] |= 0x40000000u; // set   bit 6 of byte 31
 
     // Fixed-base scalar multiplication using precomputed 2^i·G table.
-    // g_table point i: u32s [i*16 .. i*16+7] = x, [i*16+8 .. i*16+15] = y (LE).
+    // g_table point i: u32s [i*24 .. i*24+7]=x, [i*24+8..+15]=y, [i*24+16..+23]=t=x·y (LE).
     var result = point_identity();
     for (var i = 0u; i < 255u; i++) {
         let word    = i >> 5u;
         let bit_pos = i & 31u;
         let b       = (scalar_bytes[word] >> bit_pos) & 1u;
 
-        let tbl_base = i * 16u;
-        var px: array<u32, 8>;
-        var py: array<u32, 8>;
-        for (var j = 0u; j < 8u; j++) {
-            px[j] = g_table[tbl_base + j];
-            py[j] = g_table[tbl_base + 8u + j];
+        if (b != 0u) {
+            let tbl_base = i * 24u;
+            var px: array<u32, 8>;
+            var py: array<u32, 8>;
+            var pt: array<u32, 8>;
+            for (var j = 0u; j < 8u; j++) {
+                px[j] = g_table[tbl_base + j];
+                py[j] = g_table[tbl_base + 8u  + j];
+                pt[j] = g_table[tbl_base + 16u + j];
+            }
+            let bx = bigint_from_bytes_le(&px);
+            let by = bigint_from_bytes_le(&py);
+            let bt = bigint_from_bytes_le(&pt);
+            result = point_add(result, PointExtended(bx, by, bigint_one(), bt));
         }
-        var bx = bigint_from_bytes_le(&px);
-        var by = bigint_from_bytes_le(&py);
-
-        // Branch-free select: if bit=0, substitute identity point (0, 1).
-        for (var j = 0u; j < NUM_LIMBS; j++) {
-            bx.limbs[j] = select(0u, bx.limbs[j], b != 0u);
-            let id_y     = select(0u, 1u, j == 0u);
-            by.limbs[j]  = select(id_y, by.limbs[j], b != 0u);
-        }
-        let p_t   = field_mul(bx, by);
-        let p_ext = PointExtended(bx, by, bigint_one(), p_t);
-        result    = point_add(result, p_ext);
     }
 
     // Compress and write output.
