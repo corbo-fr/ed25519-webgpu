@@ -6,6 +6,14 @@
 //   product of two limbs < (2^13)^2 = 2^26 < 2^32 (fits in u32)
 //   max accumulation per output limb: 20 × 2^26 ≈ 2^30.3 < 2^32 (no u64 needed)
 //   2^260 ≡ 608 mod (2^255-19) — tiny fold factor
+//
+// 10-limb × 26-bit investigation (Option A from issue #8):
+//   Halving NUM_LIMBS to 10 would cut register pressure per thread by ~½
+//   (~170 → ~85 u32 registers) and roughly double GPU occupancy.
+//   Blocker: limb products (2^26)² = 2^52 overflow u32 — requires emulating
+//   64-bit multiply with two u32 ops (hi/lo schoolbook split).
+//   Whether the added instructions per product cancel the occupancy gain is
+//   hardware-dependent; profile before committing to the rewrite (~2 days).
 
 const LIMB_BITS: u32 = 13u;
 const LIMB_MASK: u32 = 0x1FFFu;
@@ -80,6 +88,28 @@ fn bigint_mul(a: BigInt, b: BigInt) -> BigIntWide {
     for (var i = 0u; i < NUM_LIMBS; i++) {
         for (var j = 0u; j < NUM_LIMBS; j++) {
             w.limbs[i + j] += a.limbs[i] * b.limbs[j];
+        }
+    }
+    var carry: u32 = 0u;
+    for (var i = 0u; i < WIDE_LIMBS; i++) {
+        let s = w.limbs[i] + carry;
+        w.limbs[i] = s & LIMB_MASK;
+        carry = s >> LIMB_BITS;
+    }
+    return w;
+}
+
+// Schoolbook squaring → 40-limb wide result, exploiting a² cross-term symmetry.
+// Diagonal (i==j): w[2i] += a[i]²  — 20 products.
+// Off-diagonal (i<j, counted twice): w[i+j] += 2×a[i]×a[j]  — 190 products.
+// Total: N(N+1)/2 = 210 vs N² = 400 for bigint_mul. ~1.9× faster.
+// Overflow safe: max per-limb sum ≈ 10×2×(2^13)² = 2^30.3 < 2^32.
+fn bigint_sq(a: BigInt) -> BigIntWide {
+    var w: BigIntWide;
+    for (var i = 0u; i < NUM_LIMBS; i++) {
+        w.limbs[2u * i] += a.limbs[i] * a.limbs[i];
+        for (var j = i + 1u; j < NUM_LIMBS; j++) {
+            w.limbs[i + j] += 2u * a.limbs[i] * a.limbs[j];
         }
     }
     var carry: u32 = 0u;
