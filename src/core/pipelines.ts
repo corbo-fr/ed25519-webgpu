@@ -22,27 +22,47 @@ export type Pipelines = {
 
 const cache = new WeakMap<GPUDevice, Pipelines>();
 
+// Compile a shader module and throw a descriptive error if naga/Tint rejects it.
+// Surfaces line numbers and messages from the GPU compiler — critical for Firefox/wgpu
+// compatibility debugging where silent failures are common.
+async function mkSafe(device: GPUDevice, code: string, label: string): Promise<GPUShaderModule> {
+    const module = device.createShaderModule({ code, label });
+    const info = await module.getCompilationInfo();
+    const errors = info.messages.filter(m => m.type === 'error');
+    if (errors.length > 0) {
+        const lines = errors.map(m => `  line ${m.lineNum}: ${m.message}`).join('\n');
+        throw new Error(`[webgpu-ed25519] shader "${label}" failed to compile:\n${lines}`);
+    }
+    return module;
+}
+
 export async function compilePipelines(device: GPUDevice): Promise<Pipelines> {
     const hit = cache.get(device);
     if (hit) return hit;
 
-    const mk = (code: string) => device.createShaderModule({ code });
+    const [sha512Mod, scalarMultMod, deriveMod, vanityMod] = await Promise.all([
+        mkSafe(device, SHA512_SOURCE,      'sha512'),
+        mkSafe(device, SCALAR_MULT_SOURCE, 'scalar-mult'),
+        mkSafe(device, DERIVE_SOURCE,      'derive'),
+        mkSafe(device, VANITY_SOURCE,      'vanity'),
+    ]);
+
     const [sha512, scalarMult, derive, vanity] = await Promise.all([
         device.createComputePipelineAsync({
             layout: 'auto',
-            compute: { module: mk(SHA512_SOURCE), entryPoint: 'main' },
+            compute: { module: sha512Mod,      entryPoint: 'main' },
         }),
         device.createComputePipelineAsync({
             layout: 'auto',
-            compute: { module: mk(SCALAR_MULT_SOURCE), entryPoint: 'main' },
+            compute: { module: scalarMultMod,  entryPoint: 'main' },
         }),
         device.createComputePipelineAsync({
             layout: 'auto',
-            compute: { module: mk(DERIVE_SOURCE), entryPoint: 'main' },
+            compute: { module: deriveMod,      entryPoint: 'main' },
         }),
         device.createComputePipelineAsync({
             layout: 'auto',
-            compute: { module: mk(VANITY_SOURCE), entryPoint: 'main' },
+            compute: { module: vanityMod,      entryPoint: 'main' },
         }),
     ]);
 
