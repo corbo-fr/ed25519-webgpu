@@ -86,9 +86,9 @@ fn field_mul(a: BigInt, b: BigInt) -> BigInt {
     return field_reduce_wide(bigint_mul(a, b));
 }
 
-// a^2 mod p — dedicated schoolbook squaring, ~1.9× faster than field_mul(a, a).
+// a^2 mod p.
 fn field_sq(a: BigInt) -> BigInt {
-    return field_reduce_wide(bigint_sq(a));
+    return field_mul(a, a);
 }
 
 // base^exp mod p — binary square-and-multiply, LSB-first within each 32-bit word.
