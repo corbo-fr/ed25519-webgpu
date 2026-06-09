@@ -59,6 +59,11 @@
     "test:perf": "vitest run --project browser --reporter=verbose test/gpu/perf",
     "test:stress": "vitest run --project browser --reporter=verbose test/gpu/stress",
     "test:watch": "vitest --project browser",
+    "test:safari": "vitest run --project webkit",
+    "test:layer1:safari": "vitest run --project webkit --reporter=verbose test/gpu/primitives",
+    "test:layer2:safari": "vitest run --project webkit --reporter=verbose test/gpu/derive",
+    "test:layer3:safari": "vitest run --project webkit --reporter=verbose test/gpu/vanity",
+    "test:perf:safari": "vitest run --project webkit --reporter=verbose test/gpu/perf",
     "lint": "tsc --noEmit",
     "bench": "node --experimental-vm-modules bench/benchmark.ts"
   },
