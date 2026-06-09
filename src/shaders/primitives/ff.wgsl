@@ -86,9 +86,9 @@ fn field_mul(a: BigInt, b: BigInt) -> BigInt {
     return field_reduce_wide(bigint_mul(a, b));
 }
 
-// a^2 mod p.
+// a^2 mod p — uses bigint_sq (N(N+1)/2 ops) instead of field_mul (N² ops).
 fn field_sq(a: BigInt) -> BigInt {
-    return field_mul(a, a);
+    return field_reduce_wide(bigint_sq(a));
 }
 
 // base^exp mod p — binary square-and-multiply, LSB-first within each 32-bit word.
@@ -109,9 +109,12 @@ fn field_pow(base: BigInt, exp: ptr<function, array<u32, 8>>) -> BigInt {
 }
 
 // Repeated squaring: returns a^(2^n).
+// Array indirection on `n` prevents Tint from constant-folding the loop bound
+// and inlining 250+ copies of field_sq (which caused a compiler stack overflow).
 fn field_sq_n(a: BigInt, n: u32) -> BigInt {
     var r = a;
-    for (var i = 0u; i < n; i++) {
+    var bound = array<u32, 1>(n);
+    for (var i = 0u; i < bound[0]; i++) {
         r = field_sq(r);
     }
     return r;
