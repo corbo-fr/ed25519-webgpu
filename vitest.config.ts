@@ -36,6 +36,18 @@ export default defineConfig({
           },
         },
       },
+      {
+        plugins: [wgslPlugin],
+        test: {
+          name: 'webkit',
+          include: ['test/gpu/**/*.test.ts'],
+          browser: {
+            enabled: true,
+            name: 'webkit',
+            provider: 'playwright',
+          },
+        },
+      },
     ],
   },
 })
