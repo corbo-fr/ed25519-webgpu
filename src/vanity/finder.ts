@@ -42,8 +42,12 @@ export type VanityOptions = {
     suffix?: string;
     /** Whether prefix/suffix matching is case-sensitive. Default: true. */
     caseSensitive?: boolean;
-    /** Number of random keypairs generated per GPU batch. Default: 1024. */
-    batchSize?: number;
+    /**
+     * Number of random keypairs generated per GPU batch. Default: 65536.
+     * Pass `'auto'` to let the library probe the GPU and pick the optimal size
+     * (calls `gpu.calibrateBatchSize()` once before the first batch).
+     */
+    batchSize?: number | 'auto';
     /** Pass an AbortController signal to stop the search. */
     signal?: AbortSignal;
     /** Called after each batch with the cumulative number of keys checked. */
@@ -129,11 +133,15 @@ export async function* findVanity(
         prefix,
         suffix,
         caseSensitive = true,
-        batchSize = 65536,
+        batchSize: batchSizeOpt = 65536,
         signal,
         onProgress,
         encodeAddress = base58Encode,
     } = opts;
+
+    const batchSize = batchSizeOpt === 'auto'
+        ? await gpu.calibrateBatchSize()
+        : batchSizeOpt;
 
     const prefixBytes = prefix ? encodePrefix(prefix) : undefined;
     const suffixBytes = suffix ? encodeSuffix(suffix) : undefined;

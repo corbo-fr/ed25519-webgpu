@@ -8,6 +8,16 @@ import { runVanityBatch, createVanityBufs, destroyVanityBufs, type VanityBufs, t
 
 const DERIVE_BATCH = 65536;
 
+const CALIB_SIZES = [4096, 16384, 65536, 131072, 262144];
+const CALIB_NO_FILTER: VanityBatchOpts = {
+    L: new Uint32Array(8),
+    H: new Uint32Array(8).fill(0xFFFFFFFF),
+    hasPrefix: false,
+    suffixMod: 0,
+    suffixVal: 0,
+    hasSuffix: false,
+};
+
 /** High-level GPU-accelerated Ed25519 key derivation. */
 export class Ed25519GPU {
     private device: GPUDevice;
@@ -17,6 +27,7 @@ export class Ed25519GPU {
     private vanityBufN = 0;
     private deriveBufs: DeriveBufs | null = null;
     private deriveBufN = 0;
+    private _calibratedBatchSize?: number;
 
     private constructor(device: GPUDevice, pipelines: Pipelines, gTableBuf: GPUBuffer) {
         this.device    = device;
@@ -69,6 +80,51 @@ export class Ed25519GPU {
             results.push(...await runDeriveBatch(this.device, this.pipelines, this.deriveBufs, chunk));
         }
         return results;
+    }
+
+    /**
+     * Probe the GPU across batch sizes [4096, 16384, 65536, 131072, 262144] and
+     * return the smallest size that achieves ≥95% of peak throughput. The result
+     * is cached on this instance, so subsequent calls are instant.
+     *
+     * Use this to feed `batchSize` in `findVanity`, or pass `batchSize: 'auto'`
+     * to have `findVanity` call it automatically before the first batch.
+     */
+    async calibrateBatchSize(): Promise<number> {
+        if (this._calibratedBatchSize !== undefined) return this._calibratedBatchSize;
+
+        const RUNS = 3;
+        const CHUNK = 65536;
+        const throughputs: number[] = [];
+
+        for (const N of CALIB_SIZES) {
+            const seeds = new Uint8Array(N * 32);
+            for (let off = 0; off < seeds.byteLength; off += CHUNK)
+                crypto.getRandomValues(seeds.subarray(off, Math.min(off + CHUNK, seeds.byteLength)));
+
+            await this._vanityBatch(seeds, CALIB_NO_FILTER);
+
+            let totalMs = 0;
+            for (let r = 0; r < RUNS; r++) {
+                for (let off = 0; off < seeds.byteLength; off += CHUNK)
+                    crypto.getRandomValues(seeds.subarray(off, Math.min(off + CHUNK, seeds.byteLength)));
+                const t0 = performance.now();
+                await this._vanityBatch(seeds, CALIB_NO_FILTER);
+                totalMs += performance.now() - t0;
+            }
+
+            throughputs.push((N * RUNS / totalMs) * 1000);
+        }
+
+        const maxThroughput = Math.max(...throughputs);
+        const threshold = maxThroughput * 0.95;
+        let bestIdx = throughputs.length - 1;
+        for (let i = 0; i < throughputs.length; i++) {
+            if (throughputs[i] >= threshold) { bestIdx = i; break; }
+        }
+
+        this._calibratedBatchSize = CALIB_SIZES[bestIdx];
+        return this._calibratedBatchSize;
     }
 
     /**
