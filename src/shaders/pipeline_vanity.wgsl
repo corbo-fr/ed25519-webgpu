@@ -44,11 +44,13 @@ fn le256_gte(a: ptr<function, array<u32, 8>>, b: ptr<function, array<u32, 8>>) -
 }
 
 // value mod m, processing BigInt limbs from MSB (limbs[19]) to LSB (limbs[0]).
-// Safe for m <= 58^3 = 195112 (rem << 13 < 2^31, no u32 overflow).
+// Two-step shift avoids u32 overflow for m up to 58^4 = 11316496 (< 2^24).
+// Math: (rem << 13 | limb) % m = ((rem*64 % m)*128 + limb) % m
 fn bigint_mod_u32(a: BigInt, m: u32) -> u32 {
     var rem: u32 = 0u;
     for (var i = NUM_LIMBS; i > 0u; i--) {
-        rem = ((rem << LIMB_BITS) | a.limbs[i - 1u]) % m;
+        let r6 = (rem << 6u) % m;                       // rem*64 < 2^30 for m<2^24 ✓
+        rem = ((r6 << 7u) | a.limbs[i - 1u]) % m;       // r6*128 < 2^31 ✓
     }
     return rem;
 }

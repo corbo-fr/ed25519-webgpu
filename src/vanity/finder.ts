@@ -153,7 +153,7 @@ export async function* findVanity(
         (prefix !== undefined || suffix !== undefined);
 
     const bounds      = useGpuFilter && prefix ? computePrefixBounds(prefix) : null;
-    // GPU suffix filter is only safe for ≤3 chars (bigint_mod_u32 overflows for m > 58^3).
+    // GPU suffix filter is only safe for ≤4 chars (bigint_mod_u32 two-step shift handles m up to 58^4).
     const suffixP     = useGpuFilter && suffix ? computeSuffixParams(suffix) : null;
     const canGpuPrefix = bounds !== null;
     const canGpuSuffix = suffixP !== null;

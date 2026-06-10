@@ -74,10 +74,10 @@ export function computePrefixBounds(prefix: string): { L: Uint32Array; H: Uint32
     return { L: beToLeU32(L_be), H: beToLeU32(H_be) };
 }
 
-// Compute suffix mod/val for GPU suffix filter (k ≤ 3 only).
+// Compute suffix mod/val for GPU suffix filter (k ≤ 4 only).
 // Returns null if suffix is empty or too long for GPU safe arithmetic.
 export function computeSuffixParams(suffix: string): { mod: number; val: number } | null {
-    if (!suffix || suffix.length > 3) return null;
+    if (!suffix || suffix.length > 4) return null;
     let mod = 1;
     let val = 0;
     for (const c of suffix) {
