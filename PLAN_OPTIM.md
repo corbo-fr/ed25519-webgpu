@@ -73,7 +73,7 @@ git push
 
 **Prompt session suivante :**
 ```
-Lis /Users/trixky/Projects/webgpu-ed25519/PLAN_OPTIM.md et implémente le Step 2.
+Lis /Users/corbo-fr/Projects/ed25519-webgpu/PLAN_OPTIM.md et implémente le Step 2.
 Le Step 1 (fused pipeline) est terminé et commité.
 ```
 
@@ -195,7 +195,7 @@ git push
 
 **Prompt session suivante :**
 ```
-Lis /Users/trixky/Projects/webgpu-ed25519/PLAN_OPTIM.md et implémente le Step 3.
+Lis /Users/corbo-fr/Projects/ed25519-webgpu/PLAN_OPTIM.md et implémente le Step 3.
 Les Steps 1 et 2 (fused pipeline + fixed-base scalar_mult) sont terminés et commités.
 ```
 
@@ -268,7 +268,7 @@ git push
 
 **Prompt session suivante :**
 ```
-Lis /Users/trixky/Projects/webgpu-ed25519/PLAN_OPTIM.md et implémente le Step 4.
+Lis /Users/corbo-fr/Projects/ed25519-webgpu/PLAN_OPTIM.md et implémente le Step 4.
 Les Steps 1, 2, 3 sont terminés et commités.
 ```
 

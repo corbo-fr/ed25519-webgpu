@@ -1,7 +1,7 @@
 # webgpu-ed25519 — Plan Step 3 : intégration dans vanity_keypair_generator
 
 > **Contexte :** `webgpu-ed25519` (Step 2 ✅) est prête. Ce plan intègre la lib dans
-> `/Users/trixky/Projects/vanity_keypair_generator` (SvelteKit, Cloudflare Pages).
+> `/Users/corbo-fr/Projects/vanity_keypair_generator` (SvelteKit, Cloudflare Pages).
 > Worker CPU actuel : Rust WASM-SIMD (`vanity-worker.ts`). Cible : GPU si dispo, fallback CPU.
 
 Statuts : ❌ pas commencé · 🔄 en cours · ✅ terminé
