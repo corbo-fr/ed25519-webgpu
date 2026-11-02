@@ -1,6 +1,6 @@
 {
   "name": "webgpu-ed25519",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Ed25519 key derivation and vanity address finder running on WebGPU — works in-browser, no backend",
   "type": "module",
   "main": "./dist/index.js",
@@ -43,9 +43,13 @@
   ],
   "license": "MIT OR Apache-2.0",
   "sideEffects": false,
+  "homepage": "https://github.com/corbo-fr/ed25519-webgpu#readme",
+  "bugs": {
+    "url": "https://github.com/corbo-fr/ed25519-webgpu/issues"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/trixky/webgpu-ed25519.git"
+    "url": "git+https://github.com/corbo-fr/ed25519-webgpu.git"
   },
   "scripts": {
     "build": "tsup",

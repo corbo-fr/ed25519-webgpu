@@ -1,6 +1,6 @@
 # webgpu-ed25519 — Plan d'implémentation Step 2
 
-> **Contexte final :** cette lib sera intégrée dans `/Users/trixky/Projects/vanity_keypair_generator` (SvelteKit, Cloudflare Pages) pour remplacer le worker CPU actuel par un pipeline GPU. L'intégration se fait après que toutes les phases de ce plan sont vertes.
+> **Contexte final :** cette lib sera intégrée dans `/Users/corbo-fr/Projects/vanity_keypair_generator` (SvelteKit, Cloudflare Pages) pour remplacer le worker CPU actuel par un pipeline GPU. L'intégration se fait après que toutes les phases de ce plan sont vertes.
 
 Statuts : ❌ pas commencé · 🔄 en cours · ✅ terminé
 
@@ -45,7 +45,7 @@ Règles non négociables appliquées à tous les fichiers WGSL :
 
 > `src/shaders/primitives/sha512.wgsl` + `src/shaders/pipeline_sha512.wgsl` — écrits, **tests pas encore lancés**
 
-**Action requise de l'utilisateur :** `! cd /Users/trixky/Projects/webgpu-ed25519 && pnpm test:layer1`
+**Action requise de l'utilisateur :** `! cd /Users/corbo-fr/Projects/ed25519-webgpu && pnpm test:layer1`
 Résultat attendu : sha512 known vectors + 1000 random seeds → 0 mismatch
 
 ### 2b — BigInt 20-limb (13 bits) ✅
